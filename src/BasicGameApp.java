@@ -1,14 +1,15 @@
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv DON'T CHANGE! vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 // Graphics Libraries
-import org.w3c.dom.css.Rect;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.image.BufferStrategy;
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-public class BasicGameApp implements Runnable, KeyListener {
+public class BasicGameApp implements Runnable, KeyListener, MouseListener {
 
     //Sets the width and height of the program window
     final int WIDTH = 1000;
@@ -23,8 +24,14 @@ public class BasicGameApp implements Runnable, KeyListener {
     HockeyPlayer player;
     Puck puck;
     Goal goal;
+    Defender defender;
 
-
+    Font myFont;
+    int score = 0;
+    boolean gameOver = false;
+    boolean playing = true;
+    boolean hasPuck = false;
+    double a,b,c,am,bm,cm;
 
 
 
@@ -36,37 +43,73 @@ public class BasicGameApp implements Runnable, KeyListener {
         //create (construct) the objects needed for the game
         background = Toolkit.getDefaultToolkit().getImage("HockeyRink.jpg");
 
-        player = new HockeyPlayer(150,300,6,6,80,80);
+        player = new HockeyPlayer(150,300,6,6,100,100);
         player.name = "Hazel";
         player.image = Toolkit.getDefaultToolkit().getImage("HockeyPlayer.png");
 
-        puck = new Puck(400,350,0,0, 40, 40);
+        puck = new Puck(400,350,0,0, 50, 50);
         puck.name = "Puck";
-        puck.image = Toolkit.getDefaultToolkit().getImage("Puck.png");
+        puck.aliveImage = Toolkit.getDefaultToolkit().getImage("Puck.png");
+        puck.deadImage = Toolkit.getDefaultToolkit().getImage("PuckDeadImage.png");
 
-        goal = new Goal(780,230,0,0,180,240);
+        goal = new Goal(900,300,115,115);
         goal.name = "Goal";
         goal.image = Toolkit.getDefaultToolkit().getImage("Goal.png");
 
+        defender = new Defender(650,200,0,5,120,120);
+        defender.name = "Defender";
+        defender.image = Toolkit.getDefaultToolkit().getImage("Defender.png");
 
     }
     // end BasicGameApp constructor
 
     public void moveThings() {
-        player.move();
-        puck.move();
-        goal.move();
-        //call the move() code for each object  -
+        if (playing) {
+            player.move();
+            puck.move();
+            goal.move();
+            defender.move();
+            //call the move() code for each object  -
 
+
+        }
     }
 
     public void checkCollisions(){
-        if (player.hitbox.intersects(puck.hitbox)){
-            puck.xpos = player.xpos;
-            puck.ypos = player.ypos;
-            puck.hitbox = new Rectangle(puck.xpos, puck.ypos, puck.width, puck.height);
+        if (player.hitbox.intersects(puck.hitbox)) {
+            hasPuck = true;  // remember the state
         }
 
+        if (hasPuck) {
+            puck.xpos = player.xpos + player.width;
+            puck.ypos = player.ypos + player.height/2;
+            puck.hitbox = new Rectangle((int)puck.xpos, (int)puck.ypos, puck.width, puck.height);
+            puck.dx = 0;
+            puck.dy = 0;
+        }
+
+        if (puck.hitbox.intersects(goal.hitbox)) {
+            score = score + 1;
+
+            puck.xpos = 400;
+            puck.ypos = 350;
+            puck.dx = 0;
+            puck.dy = 0;
+            puck.isAlive = true;
+
+            hasPuck = false;
+
+            puck.hitbox = new Rectangle((int)puck.xpos,(int) puck.ypos, puck.width, puck.height);
+        }
+
+        if (puck.hitbox.intersects(defender.hitbox)) {
+            puck.isAlive = false;
+            playing = false;
+            gameOver = true;
+
+            puck.dx = 0;
+            puck.dy = 0;
+        }
     }
 
     //Paints things on the screen using bufferStrategy
@@ -78,9 +121,34 @@ public class BasicGameApp implements Runnable, KeyListener {
         // Signature: drawImage(Image img, int x, int y, int width, int height, ImageObserver observer)
         g.drawImage(background, 0,0,WIDTH,HEIGHT,null);
         g.drawImage(player.image, player.xpos, player.ypos, player.width, player.height, null);
-        g.drawImage(puck.image, puck.xpos, puck.ypos, puck.width, puck.height, null);
         g.drawImage(goal.image, goal.xpos, goal.ypos, goal.width, goal.height, null);
+        g.drawImage(defender.image, defender.xpos, defender.ypos, defender.width, defender.height, null);
 
+        g.setFont(myFont);
+        g.setColor(Color.BLACK);
+        g.drawString("Score: " + score, 20, 40);
+
+        if (puck.isAlive == true) {
+            g.drawImage(puck.aliveImage,(int) puck.xpos, (int)puck.ypos, puck.width, puck.height, null);
+        } else {
+            g.drawImage(puck.deadImage,(int) puck.xpos, (int)puck.ypos, puck.width, puck.height, null);
+        }
+
+        if (gameOver) {
+            g.setFont(new Font("Arial", Font.BOLD, 120));
+            g.setColor(Color.BLACK);
+            g.drawString("GAME OVER", 150, 350);
+        }
+/*
+        System.out.println("disx"+Math.pow(goal.xpos-puck.xpos,2));
+        a=Math.pow(goal.xpos-puck.xpos,2);
+        b=Math.pow(goal.ypos-puck.ypos,2);
+        c=Math.pow(a+b,.5);
+        am=(Math.pow(a,.5)*c)/5;
+        bm=(Math.pow(b,.5)*c)/5;
+        System.out.println("disy"+Math.pow(goal.xpos-puck.xpos,0.5));
+
+ */
         // Keep the code below at the end of render()
         g.dispose();
         bufferStrategy.show();
@@ -151,6 +219,7 @@ public class BasicGameApp implements Runnable, KeyListener {
         canvas.setBounds(0, 0, WIDTH, HEIGHT);
         canvas.setIgnoreRepaint(true);
         canvas.addKeyListener(this);
+        canvas.addMouseListener(this);
 
         panel.add(canvas);  // adds the canvas to the panel.
 
@@ -165,6 +234,8 @@ public class BasicGameApp implements Runnable, KeyListener {
         bufferStrategy = canvas.getBufferStrategy();
         canvas.requestFocus();
         System.out.println("DONE graphic setup");
+
+        myFont = new Font("Arial", Font.BOLD, 24);
     }
 
     @Override
@@ -192,6 +263,65 @@ public class BasicGameApp implements Runnable, KeyListener {
         else if (key == 37){player.left = false;} // left arrow: 37
         else if (key == 40){player.down = false;} // down arrow: 40
         else if (key == 39){player.right = false;} // right arrow: 39
+
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        int mouseX = e.getX();
+        int mouseY = e.getY();
+        if (goal.hitbox.contains(mouseX, mouseY)){
+
+
+        }
+            //else {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        int mouseX = e.getX();
+        int mouseY = e.getY();
+        System.out.println("test");
+        //puck.xpos=puck.xpos+100;
+
+        System.out.println("mouseX:" +mouseX);
+        System.out.println("mouseY:" +mouseY);
+
+        if (goal.hitbox.contains(mouseX, mouseY) && hasPuck){
+            hasPuck = false;
+            puck.xpos = puck.xpos + 60;
+            a=Math.pow(goal.xpos-puck.xpos,2);
+            b=Math.pow(goal.ypos-puck.ypos,2);
+            c=Math.pow(a+b,.5);
+            am=(Math.pow(a,.5)*5)/c;
+            bm=(Math.pow(b,.5)*5)/c;
+            System.out.println("ammmmm"+am);
+            System.out.println("bbbbbmmmm"+bm);
+
+
+            puck.dx=am;
+            puck.dy=-bm;
+
+
+            puck.hitbox = new Rectangle((int)puck.xpos, (int)puck.ypos, puck.width, puck.height);
+        }
+            //else {
+
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
 
     }
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

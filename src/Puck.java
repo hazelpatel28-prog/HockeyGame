@@ -2,28 +2,31 @@ import java.awt.*;
 
 public class Puck {
     String name;
-    Image image;
-    int xpos;
-    int ypos;
+    double xpos;
+    double ypos;
     double dx;
     double dy;
     int width;
     int height;
     Rectangle hitbox;
+    Image aliveImage;
+    Image deadImage;
     boolean isAlive = true;
 
-    public Puck(int xposInput, int yposInput, double dxInput, double dyInput, int widthInput, int heightInput){
+    public Puck(int xposInput, int yposInput, int dxInput, int dyInput, int widthInput, int heightInput){
         xpos = xposInput;
         ypos = yposInput;
         dx = dxInput;
         dy = dyInput;
         width = widthInput;
         height = heightInput;
-        hitbox = new Rectangle(xpos, ypos, width, height);
+        hitbox = new Rectangle((int)xpos, (int)ypos, width, height);
     }
 
     public void move() {
         // for now, puck doesn't move
-        hitbox = new Rectangle(xpos, ypos, width, height);
+        xpos=(xpos+dx);
+        ypos=ypos+dy;
+        hitbox = new Rectangle((int)xpos, (int)ypos, width, height);
     }
 }
