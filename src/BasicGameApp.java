@@ -1,6 +1,10 @@
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv DON'T CHANGE! vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 // Graphics Libraries
 
+/*
+Author: Hazel Patel
+ */
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -19,11 +23,19 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
     //Variable Definition Section
     //You can set their initial values too
 
+    // Array that has the two background images
+    Image[] backgrounds = new Image[2];
 
-    Image background;
+    // the hockey player controlled by the arrow keys
     HockeyPlayer player;
+
+    // the puck that the player shoots towards the goal
     Puck puck;
+
+    // the goal the puck needs to reach
     Goal goal;
+
+    // the defender that moves up and down to block the puck
     Defender defender;
 
     Font myFont;
@@ -32,6 +44,7 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
     boolean playing = true;
     boolean hasPuck = false;
     double a,b,c,am,bm,cm;
+    int backgroundNum = 0;
 
 
 
@@ -41,7 +54,9 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
 
         //variable and objects
         //create (construct) the objects needed for the game
-        background = Toolkit.getDefaultToolkit().getImage("HockeyRink.jpg");
+        backgrounds[0] = Toolkit.getDefaultToolkit().getImage("HockeyRink.jpg");
+        backgrounds[1] = Toolkit.getDefaultToolkit().getImage("rink2.png");
+
 
         player = new HockeyPlayer(150,300,6,6,100,100);
         player.name = "Hazel";
@@ -63,7 +78,7 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
     }
     // end BasicGameApp constructor
 
-    public void moveThings() {
+    public void moveThings() { // moves all objects in the game each frame
         if (playing) {
             player.move();
             puck.move();
@@ -75,12 +90,12 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
         }
     }
 
-    public void checkCollisions(){
-        if (player.hitbox.intersects(puck.hitbox)) {
+    public void checkCollisions(){ // checks collisions between the player, puck, goal, and defender
+        if (player.hitbox.intersects(puck.hitbox)) { // if the player touches the puck, the player now has the puck
             hasPuck = true;  // remember the state
         }
 
-        if (hasPuck) {
+        if (hasPuck) { // if the player has the puck, keep the puck attatched to the stick
             puck.xpos = player.xpos + player.width;
             puck.ypos = player.ypos + player.height/2;
             puck.hitbox = new Rectangle((int)puck.xpos, (int)puck.ypos, puck.width, puck.height);
@@ -88,7 +103,7 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
             puck.dy = 0;
         }
 
-        if (puck.hitbox.intersects(goal.hitbox)) {
+        if (puck.hitbox.intersects(goal.hitbox)) {   // if the puck reaches the goal, the score increases and resets the puck back to original position
             score = score + 1;
 
             puck.xpos = 400;
@@ -102,7 +117,7 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
             puck.hitbox = new Rectangle((int)puck.xpos,(int) puck.ypos, puck.width, puck.height);
         }
 
-        if (puck.hitbox.intersects(defender.hitbox)) {
+        if (puck.hitbox.intersects(defender.hitbox)) { // if the puck hits the defender, the game ends
             puck.isAlive = false;
             playing = false;
             gameOver = true;
@@ -113,13 +128,13 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
     }
 
     //Paints things on the screen using bufferStrategy
-    private void render() {
+    private void render() { // draws all images and text on the screen
         Graphics2D g = (Graphics2D) bufferStrategy.getDrawGraphics();
         g.clearRect(0, 0, WIDTH, HEIGHT);
 
         //draw the images
         // Signature: drawImage(Image img, int x, int y, int width, int height, ImageObserver observer)
-        g.drawImage(background, 0,0,WIDTH,HEIGHT,null);
+        g.drawImage(backgrounds[backgroundNum], 0,0,WIDTH,HEIGHT,null);
         g.drawImage(player.image, player.xpos, player.ypos, player.width, player.height, null);
         g.drawImage(goal.image, goal.xpos, goal.ypos, goal.width, goal.height, null);
         g.drawImage(defender.image, defender.xpos, defender.ypos, defender.width, defender.height, null);
@@ -244,16 +259,25 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
     }
 
     @Override
-    public void keyPressed(KeyEvent e) {
+    public void keyPressed(KeyEvent e) { // controls key presses for movement of player and background switching
         System.out.println(e.getKeyCode());
         int key = e.getKeyCode();
+        // arrow keys move player
         if (key == 38) {player.up = true;} // up
         else if (key == 37) {player.left = true;} // left
         else if (key == 40)  {player.down = true;} // down
         else if (key == 39) {player.right = true;} // right
 
-
+        if (key == 16) { // press shift to change background
+            if (backgroundNum == 0){
+                backgroundNum = 1;
+            }
+            else {
+                backgroundNum = 0;
+            }
+        }
     }
+
 
     @Override
     public void keyReleased(KeyEvent e) {
@@ -284,7 +308,7 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
+    public void mouseReleased(MouseEvent e) { // shoots the puck toward the goal when the mouse is released
         int mouseX = e.getX();
         int mouseY = e.getY();
         System.out.println("test");
@@ -293,7 +317,7 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
         System.out.println("mouseX:" +mouseX);
         System.out.println("mouseY:" +mouseY);
 
-        if (goal.hitbox.contains(mouseX, mouseY) && hasPuck){
+        if (goal.hitbox.contains(mouseX, mouseY) && hasPuck){ // only shoot if the player has the puck and the goal is clicked
             hasPuck = false;
             puck.xpos = puck.xpos + 60;
             a=Math.pow(goal.xpos-puck.xpos,2);
@@ -305,9 +329,14 @@ public class BasicGameApp implements Runnable, KeyListener, MouseListener {
             System.out.println("bbbbbmmmm"+bm);
 
 
-            puck.dx=am;
-            puck.dy=-bm;
+            puck.dx = am;
 
+            if (puck.ypos > goal.ypos) {
+                puck.dy = -bm;   
+            }
+            else {
+                puck.dy = bm;
+            }
 
             puck.hitbox = new Rectangle((int)puck.xpos, (int)puck.ypos, puck.width, puck.height);
         }

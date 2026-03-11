@@ -13,6 +13,7 @@ public class Puck {
     Image deadImage;
     boolean isAlive = true;
 
+    // creates the puck and sets its starting position and size
     public Puck(int xposInput, int yposInput, int dxInput, int dyInput, int widthInput, int heightInput){
         xpos = xposInput;
         ypos = yposInput;
@@ -27,6 +28,8 @@ public class Puck {
         // for now, puck doesn't move
         xpos=(xpos+dx);
         ypos=ypos+dy;
+
+        // update the hitbox
         hitbox = new Rectangle((int)xpos, (int)ypos, width, height);
     }
 }
